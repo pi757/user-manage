@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理系统 - 个人资料</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .logout-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid white;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: white;
+            color: #667eea;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .profile-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .avatar-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .avatar-container {
+            position: relative;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #667eea;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .avatar-placeholder {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            border: 4px solid #667eea;
+        }
+
+        .upload-btn {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .upload-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .info-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-size: 16px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .edit-form {
+            margin-top: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e1e1;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group input:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e5e5;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            display: block;
+        }
+
+        .message.success {
+            background: #efe;
+            color: #3c3;
+            display: block;
+        }
+
+        #fileInput {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>个人资料</h1>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+
+        <div class="content">
+            <div id="message" class="message"></div>
+
+            <!-- 头像部分 -->
+            <div class="profile-section">
+                <h2 class="section-title">头像</h2>
+                <div class="avatar-section">
+                    <div class="avatar-container">
+                        <div id="avatarDisplay" class="avatar-placeholder">U</div>
+                    </div>
+                    <br>
+                    <input type="file" id="fileInput" accept="image/*">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                        上传新头像
+                    </button>
+                </div>
+            </div>
+
+            <!-- 基本信息 -->
+            <div class="profile-section">
+                <h2 class="section-title">基本信息</h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">用户名 (不可更改)</div>
+                        <div class="info-value" id="username">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">用户ID</div>
+                        <div class="info-value" id="userId">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 编辑资料 -->
+            <div class="profile-section">
+                <h2 class="section-title">编辑资料</h2>
+                <form id="profileForm" class="edit-form">
+                    <div class="form-group">
+                        <label for="nickname">昵称 (支持Unicode字符)</label>
+                        <input type="text" id="nickname" name="nickname" placeholder="请输入昵称">
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">保存修改</button>
+                        <button type="button" class="btn btn-secondary" onclick="loadProfile()">重置</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8080/api';
+        let currentUser = null;
+
+        // 页面加载时检查登录状态并获取用户信息
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                showMessage('请先登录', 'error');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+                return;
+            }
+
+            loadProfile();
+            setupFileUpload();
+        });
+
+        // 加载用户资料
+        async function loadProfile() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/profile`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': token
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.code === 0) {
+                    currentUser = data.data;
+                    displayProfile(currentUser);
+                } else {
+                    showMessage(data.message || '获取用户信息失败', 'error');
+                    if (response.status === 401) {
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                    }
+                }
+            } catch (error) {
+                showMessage('网络错误', 'error');
+                console.error('Load profile error:', error);
+            }
+        }
+
+        // 显示用户资料
+        function displayProfile(user) {
+            document.getElementById('username').textContent = user.username;
+            document.getElementById('userId').textContent = user.id;
+            document.getElementById('nickname').value = user.nickname || '';
+
+            // 显示头像
+            const avatarDisplay = document.getElementById('avatarDisplay');
+            if (user.avatar) {
+                avatarDisplay.innerHTML = `<img src="http://localhost:8080${user.avatar}" class="avatar" alt="Avatar">`;
+            } else {
+                const firstChar = user.nickname ? user.nickname.charAt(0) : user.username.charAt(0).toUpperCase();
+                avatarDisplay.textContent = firstChar;
+                avatarDisplay.className = 'avatar-placeholder';
+            }
+        }
+
+        // 更新资料表单提交
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const token = localStorage.getItem('token');
+            const nickname = document.getElementById('nickname').value;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token
+                    },
+                    body: JSON.stringify({ nickname })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.code === 0) {
+                    showMessage('资料更新成功', 'success');
+                    loadProfile(); // 重新加载资料
+                } else {
+                    showMessage(data.message || '更新失败', 'error');
+                }
+            } catch (error) {
+                showMessage('网络错误', 'error');
+                console.error('Update profile error:', error);
+            }
+        });
+
+        // 设置文件上传
+        function setupFileUpload() {
+            const fileInput = document.getElementById('fileInput');
+            fileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // 验证文件大小 (10MB)
+                if (file.size > 10 * 1024 * 1024) {
+                    showMessage('文件大小不能超过10MB', 'error');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                const token = localStorage.getItem('token');
+
+                try {
+                    showMessage('正在上传...', 'success');
+                    const response = await fetch(`${API_BASE_URL}/upload/avatar`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': token
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok && data.code === 0) {
+                        showMessage('头像上传成功', 'success');
+                        loadProfile(); // 重新加载资料
+                    } else {
+                        showMessage(data.message || '上传失败', 'error');
+                    }
+                } catch (error) {
+                    showMessage('网络错误', 'error');
+                    console.error('Upload error:', error);
+                }
+            });
+        }
+
+        // 退出登录
+        async function logout() {
+            const token = localStorage.getItem('token');
+            
+            try {
+                await fetch(`${API_BASE_URL}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': token
+                    }
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            } finally {
+                localStorage.removeItem('token');
+                localStorage.removeItem('userId');
+                window.location.href = 'login.html';
+            }
+        }
+
+        // 显示消息
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            
+            setTimeout(() => {
+                messageEl.style.display = 'none';
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

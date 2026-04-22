@@ -1,0 +1,29 @@
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+# 安装依赖
+RUN apk add --no-cache git
+
+# 复制go.mod和go.sum
+COPY go.mod go.sum ./
+RUN go mod download
+
+# 复制源代码
+COPY . .
+
+# 编译TCP Server
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o tcp-server cmd/tcp-server/main.go
+
+# 编译HTTP Server
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o http-server cmd/http-server/main.go
+
+# 编译种子脚本
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o seed cmd/seed/main.go
+
+# 最终镜像 - TCP Server
+FROM alpine:latest AS tcp-server
+WORKDIR /app
+COPY --from=builder /app/tcp-server .
+EXPOSE 9090
+CMD ["./tcp-server"]

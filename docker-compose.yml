@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: ums-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: user_management
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    command: 
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --max-connections=1000
+      - --innodb-buffer-pool-size=2G
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    networks:
+      - ums-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: ums-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 5s
+      retries: 5
+    networks:
+      - ums-network
+
+  tcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.tcp
+    container_name: ums-tcp-server
+    ports:
+      - "9090:9090"
+    environment:
+      - MYSQL_HOST=mysql
+      - MYSQL_PORT=3306
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+      - MYSQL_DB=user_management
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - TCP_PORT=:9090
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ums-network
+    restart: unless-stopped
+
+  http-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.http
+    container_name: ums-http-server
+    ports:
+      - "8080:8080"
+    environment:
+      - HTTP_PORT=:8080
+      - TCP_PORT=tcp-server:9090
+      - UPLOAD_DIR=/app/uploads
+    volumes:
+      - upload-data:/app/uploads
+    depends_on:
+      - tcp-server
+    networks:
+      - ums-network
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
+  upload-data:
+
+networks:
+  ums-network:
+    driver: bridge
