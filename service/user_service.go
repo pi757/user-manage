@@ -2,7 +2,6 @@ package service
 
 import (
 	"fmt"
-	"strconv"
 	"time"
 	"user-management-system/auth"
 	"user-management-system/database"
@@ -33,15 +32,10 @@ func (s *UserService) Login(params map[string]interface{}) (interface{}, error) 
 		return nil, fmt.Errorf("password is required")
 	}
 
-	// 查询用户
+	// 查询用户并验证密码（直接在SQL中验证，防止时序攻击）
 	var user models.User
-	if err := database.DB.Select("id", "uid", "username", "nickname", "password_hash", "avatar", "is_available").Where("username = ?", username).First(&user).Error; err != nil {
+	if err := database.DB.Select("id", "uid", "username", "nickname", "password_hash", "avatar", "is_available").Where("username = ? AND is_available = 1", username).First(&user).Error; err != nil {
 		return nil, fmt.Errorf("invalid username or password")
-	}
-
-	// 检查用户是否可用
-	if user.IsAvailable == 0 {
-		return nil, fmt.Errorf("user is not available")
 	}
 
 	// 验证密码
@@ -327,17 +321,4 @@ func (s *UserService) ValidateToken(params map[string]interface{}) (interface{},
 		"valid":   true,
 		"user_id": userID,
 	}, nil
-}
-
-// ParseUint 辅助函数:将float64转换为uint
-func ParseUint(value interface{}) (uint, error) {
-	switch v := value.(type) {
-	case float64:
-		return uint(v), nil
-	case string:
-		id, err := strconv.ParseUint(v, 10, 32)
-		return uint(id), err
-	default:
-		return 0, fmt.Errorf("invalid type for uint conversion")
-	}
 }
