@@ -27,15 +27,17 @@ func main() {
 	users := make([]models.User, 0, testUsers)
 	for i := 1; i <= testUsers; i++ {
 		password, _ := auth.HashPassword(fmt.Sprintf("password%d", i))
-		
+
 		nicknames := []string{"张三", "李四", "王五", "Alice", "Bob", "ユーザー"}
 		nickname := fmt.Sprintf("%s_%d", nicknames[i%len(nicknames)], i)
-		
+
 		users = append(users, models.User{
-			Username: fmt.Sprintf("user%d", i),
-			Password: password,
-			Nickname: nickname,
-			Avatar:   "",
+			UID:          fmt.Sprintf("uid_%d", i),
+			Username:     fmt.Sprintf("user%d", i),
+			PasswordHash: password,
+			Nickname:     nickname,
+			Avatar:       "",
+			IsAvailable:  1,
 		})
 	}
 

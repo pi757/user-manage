@@ -8,7 +8,6 @@ import (
 	"time"
 	"user-management-system/config"
 	"user-management-system/database"
-	"user-management-system/models"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -49,31 +48,19 @@ func CheckPassword(password, hashedPassword string) bool {
 	return err == nil
 }
 
-// CreateSession 创建会话
+// CreateSession 创建会话（仅存储在Redis）
 func (s *AuthService) CreateSession(userID uint) (string, error) {
 	token, err := s.GenerateToken()
 	if err != nil {
 		return "", err
 	}
 
-	expiresAt := time.Now().Add(time.Duration(s.config.Expiration) * time.Second)
-
-	// 存储到Redis
+	// 仅存储到Redis
 	ctx := context.Background()
 	key := fmt.Sprintf("session:%s", token)
 	err = database.RedisClient.Set(ctx, key, userID, time.Duration(s.config.Expiration)*time.Second).Err()
 	if err != nil {
 		return "", fmt.Errorf("failed to store session in Redis: %w", err)
-	}
-
-	// 同时存储到MySQL(用于持久化)
-	session := models.Session{
-		Token:     token,
-		UserID:    userID,
-		ExpiresAt: expiresAt,
-	}
-	if err := database.DB.Create(&session).Error; err != nil {
-		return "", fmt.Errorf("failed to store session in MySQL: %w", err)
 	}
 
 	return token, nil
@@ -99,7 +86,7 @@ func (s *AuthService) ValidateSession(token string) (uint, error) {
 	return userID, nil
 }
 
-// DeleteSession 删除会话
+// DeleteSession 删除会话（仅从Redis删除）
 func (s *AuthService) DeleteSession(token string) error {
 	ctx := context.Background()
 	key := fmt.Sprintf("session:%s", token)
@@ -107,11 +94,6 @@ func (s *AuthService) DeleteSession(token string) error {
 	// 从Redis删除
 	if err := database.RedisClient.Del(ctx, key).Err(); err != nil {
 		return fmt.Errorf("failed to delete session from Redis: %w", err)
-	}
-
-	// 从MySQL删除
-	if err := database.DB.Where("token = ?", token).Delete(&models.Session{}).Error; err != nil {
-		return fmt.Errorf("failed to delete session from MySQL: %w", err)
 	}
 
 	return nil

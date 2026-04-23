@@ -6,12 +6,12 @@ import (
 
 // Config 应用配置
 type Config struct {
-	HTTPServer   HTTPServerConfig
-	TCPServer    TCPServerConfig
-	MySQL        MySQLConfig
-	Redis        RedisConfig
-	Session      SessionConfig
-	FileUpload   FileUploadConfig
+	HTTPServer HTTPServerConfig
+	TCPServer  TCPServerConfig
+	MySQL      MySQLConfig
+	Redis      RedisConfig
+	Session    SessionConfig
+	FileUpload FileUploadConfig
 }
 
 // HTTPServerConfig HTTP服务器配置
@@ -26,11 +26,11 @@ type TCPServerConfig struct {
 
 // MySQLConfig MySQL数据库配置
 type MySQLConfig struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	DBName   string
+	Host         string
+	Port         string
+	User         string
+	Password     string
+	DBName       string
 	MaxOpenConns int
 	MaxIdleConns int
 }
@@ -67,16 +67,16 @@ func LoadConfig() *Config {
 		},
 		MySQL: MySQLConfig{
 			Host:         getEnv("MYSQL_HOST", "localhost"),
-			Port:         getEnv("MYSQL_PORT", "3306"),
+			Port:         getEnv("MYSQL_PORT", "3307"),
 			User:         getEnv("MYSQL_USER", "root"),
-			Password:     getEnv("MYSQL_PASSWORD", "root"),
+			Password:     getEnv("MYSQL_PASSWORD", "root123"),
 			DBName:       getEnv("MYSQL_DB", "user_management"),
 			MaxOpenConns: 100,
 			MaxIdleConns: 20,
 		},
 		Redis: RedisConfig{
 			Host:     getEnv("REDIS_HOST", "localhost"),
-			Port:     getEnv("REDIS_PORT", "6379"),
+			Port:     getEnv("REDIS_PORT", "6380"),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       0,
 			PoolSize: 100,

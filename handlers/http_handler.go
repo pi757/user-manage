@@ -1,9 +1,9 @@
 package handlers
 
 import (
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"user-management-system/rpc"
-	"github.com/gin-gonic/gin"
 )
 
 // Handler HTTP处理器
@@ -67,6 +67,39 @@ func (h *Handler) Login(c *gin.Context) {
 
 	if resp.Error != "" {
 		Error(c, http.StatusUnauthorized, resp.Error)
+		return
+	}
+
+	Success(c, resp.Result)
+}
+
+// Register 注册接口
+func (h *Handler) Register(c *gin.Context) {
+	var req struct {
+		Username string `json:"username" binding:"required,min=3,max=64"`
+		Password string `json:"password" binding:"required,min=6"`
+		Nickname string `json:"nickname"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		Error(c, http.StatusBadRequest, "invalid request: "+err.Error())
+		return
+	}
+
+	params := map[string]interface{}{
+		"username": req.Username,
+		"password": req.Password,
+		"nickname": req.Nickname,
+	}
+
+	resp, err := h.rpcPool.CallWithPool("user.register", params)
+	if err != nil {
+		Error(c, http.StatusInternalServerError, "register failed: "+err.Error())
+		return
+	}
+
+	if resp.Error != "" {
+		Error(c, http.StatusBadRequest, resp.Error)
 		return
 	}
 

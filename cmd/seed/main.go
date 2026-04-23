@@ -62,15 +62,15 @@ func insertUsersBatch() {
 			}
 
 			users := generateUsers(offset+1, batchEnd)
-			
+
 			// 分批插入,每批1000条
 			for j := 0; j < len(users); j += 1000 {
 				end := j + 1000
 				if end > len(users) {
 					end = len(users)
 				}
-				
-				if err := database.DB.Create(&users[j:end]).Error; err != nil {
+
+				if err := database.DB.Create(new(users[j:end])).Error; err != nil {
 					log.Printf("Failed to insert batch %d-%d: %v", j, end, err)
 					return
 				}
@@ -85,19 +85,21 @@ func insertUsersBatch() {
 
 func generateUsers(start, end int) []models.User {
 	users := make([]models.User, 0, end-start)
-	
+
 	for i := start; i <= end; i++ {
 		password, _ := auth.HashPassword(fmt.Sprintf("password%d", i))
-		
+
 		user := models.User{
-			Username: fmt.Sprintf("user%d", i),
-			Password: password,
-			Nickname: generateNickname(i),
-			Avatar:   "",
+			UID:          fmt.Sprintf("uid_%d", i),
+			Username:     fmt.Sprintf("user%d", i),
+			PasswordHash: password,
+			Nickname:     generateNickname(i),
+			Avatar:       "",
+			IsAvailable:  1,
 		}
 		users = append(users, user)
 	}
-	
+
 	return users
 }
 
@@ -111,7 +113,7 @@ func generateNickname(index int) string {
 		"ユーザー", "利用者", "会員", "顧客", "訪問者",
 		"Пользователь", "Клиент", "Гость", "Участник", "Посетитель",
 	}
-	
+
 	rand.Seed(time.Now().UnixNano())
 	base := nicknames[rand.Intn(len(nicknames))]
 	return fmt.Sprintf("%s_%d", base, index)
@@ -120,29 +122,29 @@ func generateNickname(index int) string {
 // 优化版本:使用原生SQL批量插入(更快)
 func insertUsersWithRawSQL() {
 	fmt.Println("Using raw SQL for better performance...")
-	
-	batchSQL := "INSERT INTO users (username, password, nickname, avatar, created_at, updated_at) VALUES "
-	valueTemplate := "(?, ?, ?, ?, NOW(), NOW())"
-	
+
+	batchSQL := "INSERT INTO user (uid, username, password_hash, nickname, avatar, is_available, create_time, update_time) VALUES "
+	valueTemplate := "(?, ?, ?, ?, ?, 1, NOW(), NOW())"
+
 	for i := 1; i <= totalUsers; i += batchSize {
 		end := i + batchSize
 		if end > totalUsers {
 			end = totalUsers
 		}
 
-		args := make([]interface{}, 0, batchSize*4)
+		args := make([]interface{}, 0, batchSize*5)
 		var values []string
 
 		for j := i; j < end; j++ {
 			password, _ := auth.HashPassword(fmt.Sprintf("password%d", j))
 			nickname := generateNickname(j)
-			
+
 			values = append(values, valueTemplate)
-			args = append(args, fmt.Sprintf("user%d", j), password, nickname, "")
+			args = append(args, fmt.Sprintf("uid_%d", j), fmt.Sprintf("user%d", j), password, nickname, "")
 		}
 
 		sql := batchSQL + strings.Join(values, ",")
-		
+
 		if err := database.DB.Exec(sql, args...).Error; err != nil {
 			log.Printf("Failed to insert batch %d-%d: %v", i, end, err)
 			continue

@@ -44,6 +44,7 @@ func main() {
 	api := router.Group("/api")
 	{
 		// 认证相关
+		api.POST("/register", handler.Register)
 		api.POST("/login", handler.Login)
 		api.POST("/logout", handler.Logout)
 
@@ -55,8 +56,9 @@ func main() {
 		api.POST("/upload/avatar", uploadHandler.UploadAvatar)
 	}
 
-	// 静态文件服务(头像访问)
-	router.Static("/uploads", cfg.FileUpload.UploadDir)
+	// 静态文件服务
+	router.Static("/web", "./web")                      // 前端页面
+	router.Static("/uploads", cfg.FileUpload.UploadDir) // 头像访问
 
 	// 健康检查
 	router.GET("/health", func(c *gin.Context) {

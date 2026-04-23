@@ -42,6 +42,10 @@ func main() {
 	rpcServer := rpc.NewServer()
 
 	// 注册RPC方法
+	rpcServer.Register("user.register", func(params map[string]interface{}) (interface{}, error) {
+		return userService.Register(params)
+	})
+
 	rpcServer.Register("user.login", func(params map[string]interface{}) (interface{}, error) {
 		return userService.Login(params)
 	})

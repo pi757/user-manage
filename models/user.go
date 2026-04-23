@@ -1,37 +1,18 @@
 package models
 
 import (
-	"gorm.io/gorm"
 	"time"
 )
 
 // User 用户模型
 type User struct {
-	ID           uint           `gorm:"primarykey" json:"id"`
-	Username     string         `gorm:"size:64;uniqueIndex;not null" json:"username"`
-	Password     string         `gorm:"size:255;not null" json:"-"`
-	Nickname     string         `gorm:"size:128" json:"nickname"`
-	Avatar       string         `gorm:"size:255" json:"avatar"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
-}
-
-// TableName 指定表名
-func (User) TableName() string {
-	return "users"
-}
-
-// Session Session模型
-type Session struct {
-	ID        uint      `gorm:"primarykey" json:"id"`
-	Token     string    `gorm:"size:64;uniqueIndex;not null" json:"token"`
-	UserID    uint      `gorm:"not null;index" json:"user_id"`
-	ExpiresAt time.Time `gorm:"not null;index" json:"expires_at"`
-	CreatedAt time.Time `json:"created_at"`
-}
-
-// TableName 指定表名
-func (Session) TableName() string {
-	return "sessions"
+	ID           uint      `gorm:"primarykey;column:id" json:"id"`
+	UID          string    `gorm:"column:uid;size:64;uniqueIndex;not null;default:''" json:"uid"`
+	Username     string    `gorm:"column:username;size:64;uniqueIndex;not null;default:''" json:"username"`
+	Nickname     string    `gorm:"column:nickname;size:64;not null;default:''" json:"nickname"`
+	PasswordHash string    `gorm:"column:password_hash;size:128;not null;default:''" json:"-"`
+	Avatar       string    `gorm:"column:avatar;size:256;not null;default:''" json:"avatar"`
+	IsAvailable  int8      `gorm:"column:is_available;type:tinyint;default:1" json:"is_available"`
+	CreateTime   time.Time `gorm:"column:create_time;type:timestamp;not null;default:CURRENT_TIMESTAMP" json:"create_time"`
+	UpdateTime   time.Time `gorm:"column:update_time;type:timestamp;not null;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP" json:"update_time"`
 }

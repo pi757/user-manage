@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -25,16 +24,16 @@ func TestLoginHandler(t *testing.T) {
 func TestResponseFormat(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	
+
 	Success(c, map[string]string{"key": "value"})
-	
+
 	var response Response
 	json.Unmarshal(w.Body.Bytes(), &response)
-	
+
 	if response.Code != 0 {
 		t.Errorf("Expected code 0, got %d", response.Code)
 	}
-	
+
 	if response.Message != "success" {
 		t.Errorf("Expected message 'success', got '%s'", response.Message)
 	}
@@ -43,16 +42,16 @@ func TestResponseFormat(t *testing.T) {
 func TestErrorResponse(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
-	
+
 	Error(c, http.StatusBadRequest, "test error")
-	
+
 	var response Response
 	json.Unmarshal(w.Body.Bytes(), &response)
-	
+
 	if response.Code != http.StatusBadRequest {
 		t.Errorf("Expected code %d, got %d", http.StatusBadRequest, response.Code)
 	}
-	
+
 	if response.Message != "test error" {
 		t.Errorf("Expected message 'test error', got '%s'", response.Message)
 	}

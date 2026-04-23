@@ -14,8 +14,8 @@ import (
 
 // UploadHandler 文件上传处理器
 type UploadHandler struct {
-	rpcPool    *rpc.ClientPool
-	uploadDir  string
+	rpcPool     *rpc.ClientPool
+	uploadDir   string
 	maxFileSize int64
 }
 
@@ -51,9 +51,23 @@ func (h *UploadHandler) UploadAvatar(c *gin.Context) {
 		return
 	}
 
-	// 获取用户ID
+	// 获取用户ID和当前头像
 	resultMap := resp.Result.(map[string]interface{})
 	userID := uint(resultMap["user_id"].(float64))
+
+	// 获取用户当前头像（用于删除旧文件）
+	profileParams := map[string]interface{}{
+		"token": token,
+	}
+	profileResp, err := h.rpcPool.CallWithPool("user.getProfile", profileParams)
+	var oldAvatar string
+	if err == nil && profileResp.Error == "" {
+		if profileResult, ok := profileResp.Result.(map[string]interface{}); ok {
+			if avatar, ok := profileResult["avatar"].(string); ok && avatar != "" {
+				oldAvatar = avatar
+			}
+		}
+	}
 
 	// 处理文件上传
 	file, err := c.FormFile("avatar")
@@ -83,10 +97,10 @@ func (h *UploadHandler) UploadAvatar(c *gin.Context) {
 
 	// 生成唯一文件名
 	filename := fmt.Sprintf("%d_%d%s", userID, time.Now().UnixNano(), ext)
-	filepath := filepath.Join(h.uploadDir, filename)
+	filePath := filepath.Join(h.uploadDir, filename)
 
 	// 保存文件
-	if err := c.SaveUploadedFile(file, filepath); err != nil {
+	if err := c.SaveUploadedFile(file, filePath); err != nil {
 		Error(c, http.StatusInternalServerError, "failed to save file: "+err.Error())
 		return
 	}
@@ -101,9 +115,21 @@ func (h *UploadHandler) UploadAvatar(c *gin.Context) {
 	updateResp, err := h.rpcPool.CallWithPool("user.updateProfile", updateParams)
 	if err != nil || updateResp.Error != "" {
 		// 删除已上传的文件
-		os.Remove(filepath)
+		os.Remove(filePath)
 		Error(c, http.StatusInternalServerError, "failed to update avatar")
 		return
+	}
+
+	// 删除旧头像文件
+	if oldAvatar != "" {
+		// 提取文件名（去除 /uploads/ 前缀）
+		oldFilename := strings.TrimPrefix(oldAvatar, "/uploads/")
+		oldFilepath := filepath.Join(h.uploadDir, oldFilename)
+		if err := os.Remove(oldFilepath); err == nil {
+			fmt.Printf("Deleted old avatar: %s\n", oldFilepath)
+		} else {
+			fmt.Printf("Warning: failed to delete old avatar %s: %v\n", oldFilepath, err)
+		}
 	}
 
 	Success(c, map[string]interface{}{

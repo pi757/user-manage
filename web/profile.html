@@ -278,6 +278,10 @@
                         <div class="info-label">用户ID</div>
                         <div class="info-value" id="userId">-</div>
                     </div>
+                    <div class="info-item">
+                        <div class="info-label">UID</div>
+                        <div class="info-value" id="uid">-</div>
+                    </div>
                 </div>
             </div>
 
@@ -352,6 +356,7 @@
         function displayProfile(user) {
             document.getElementById('username').textContent = user.username;
             document.getElementById('userId').textContent = user.id;
+            document.getElementById('uid').textContent = user.uid;
             document.getElementById('nickname').value = user.nickname || '';
 
             // 显示头像

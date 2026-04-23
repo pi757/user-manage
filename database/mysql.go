@@ -40,5 +40,5 @@ func InitMySQL(cfg *config.MySQLConfig) error {
 
 // AutoMigrate 自动迁移数据库表
 func AutoMigrate() error {
-	return DB.AutoMigrate(&models.User{}, &models.Session{})
+	return DB.AutoMigrate(&models.User{})
 }

@@ -31,6 +31,7 @@ type LoginResponse struct {
 	Data    struct {
 		Token    string `json:"token"`
 		UserID   uint   `json:"user_id"`
+		UID      string `json:"uid"`
 		Username string `json:"username"`
 		Nickname string `json:"nickname"`
 		Avatar   string `json:"avatar"`
@@ -41,10 +42,12 @@ type ProfileResponse struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 	Data    struct {
-		ID       uint   `json:"id"`
-		Username string `json:"username"`
-		Nickname string `json:"nickname"`
-		Avatar   string `json:"avatar"`
+		ID          uint   `json:"id"`
+		UID         string `json:"uid"`
+		Username    string `json:"username"`
+		Nickname    string `json:"nickname"`
+		Avatar      string `json:"avatar"`
+		IsAvailable int8   `json:"is_available"`
 	} `json:"data"`
 }
 

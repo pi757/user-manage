@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"sync"
+	"time"
 )
 
 // ClientPool RPC客户端连接池
 type ClientPool struct {
-	addr     string
-	pool     chan *Client
-	maxSize  int
-	mu       sync.Mutex
+	addr    string
+	pool    chan *Client
+	maxSize int
+	mu      sync.Mutex
 }
 
 // NewClientPool 创建客户端连接池
@@ -27,6 +28,17 @@ func NewClientPool(addr string, maxSize int) *ClientPool {
 func (p *ClientPool) Get() (*Client, error) {
 	select {
 	case client := <-p.pool:
+		// 检查连接是否仍然有效
+		if client == nil || client.conn == nil {
+			return NewClient(p.addr)
+		}
+		// 尝试设置读超时来检测连接状态
+		if err := client.conn.SetReadDeadline(time.Now().Add(100 * time.Millisecond)); err != nil {
+			client.Close()
+			return NewClient(p.addr)
+		}
+		// 重置超时
+		client.conn.SetReadDeadline(time.Time{})
 		return client, nil
 	default:
 		return NewClient(p.addr)
@@ -48,14 +60,30 @@ func (p *ClientPool) CallWithPool(method string, params map[string]interface{}) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get client from pool: %w", err)
 	}
-	defer p.Put(client)
 
 	resp, err := client.Call(method, params)
 	if err != nil {
+		// 连接失败，关闭旧连接并尝试重新获取
 		client.Close()
-		return nil, err
+
+		// 重试一次
+		client, err = p.Get()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get client from pool (retry): %w", err)
+		}
+		defer p.Put(client)
+
+		resp, err = client.Call(method, params)
+		if err != nil {
+			client.Close()
+			return nil, err
+		}
+
+		return resp, nil
 	}
 
+	// 成功则放回连接池
+	p.Put(client)
 	return resp, nil
 }
 
