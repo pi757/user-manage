@@ -4,9 +4,9 @@
 
 ## 项目特性
 
-- ✅ **自研RPC框架**: 基于TCP的自定义RPC通信协议
+- ✅ **自研RPC框架**: 基于TCP的自定义RPC通信协议,支持MessagePack和JSON编解码
 - ✅ **微服务架构**: HTTP Server + TCP Server分离
-- ✅ **高性能**: 支持2000+并发,QPS > 3000
+- ✅ **高性能**: 支持2000+并发,QPS > 3000,MessagePack编解码提升30-50%性能
 - ✅ **安全认证**: Session Token机制,密码bcrypt加密
 - ✅ **缓存优化**: Redis缓存Session,提升性能
 - ✅ **文件上传**: 支持头像上传和管理
@@ -243,6 +243,17 @@ gofmt -w .
 # 运行测试
 go test ./... -v
 ```
+
+## 文档
+
+- [项目结构说明](docs/PROJECT_STRUCTURE.md)
+- [技术设计方案](docs/TECHNICAL_DESIGN.md)
+- [部署运维指南](docs/DEPLOYMENT.md)
+- [性能测试报告](docs/PERFORMANCE_TEST_REPORT.md)
+- [RPC编解码器使用指南](docs/RPC_CODEC_USAGE.md) 🆕
+- [RPC编解码器快速参考](docs/RPC_QUICK_REFERENCE.md) 🆕
+- [RPC性能对比测试](docs/RPC_PERFORMANCE_COMPARISON.md) 🆕
+- [RPC优化总结](docs/RPC_CODEC_OPTIMIZATION_SUMMARY.md) 🆕
 
 ## 常见问题
 

@@ -53,7 +53,7 @@ func (h *UploadHandler) UploadAvatar(c *gin.Context) {
 
 	// 获取用户ID和当前头像
 	resultMap := resp.Result.(map[string]interface{})
-	userID := uint(resultMap["user_id"].(float64))
+	userID := convertToUint(resultMap["user_id"])
 
 	// 获取用户当前头像（用于删除旧文件）
 	profileParams := map[string]interface{}{
@@ -115,7 +115,10 @@ func (h *UploadHandler) UploadAvatar(c *gin.Context) {
 	updateResp, err := h.rpcPool.CallWithPool("user.updateProfile", updateParams)
 	if err != nil || updateResp.Error != "" {
 		// 删除已上传的文件
-		os.Remove(filePath)
+		err := os.Remove(filePath)
+		if err != nil {
+			return
+		}
 		Error(c, http.StatusInternalServerError, "failed to update avatar")
 		return
 	}
@@ -135,4 +138,34 @@ func (h *UploadHandler) UploadAvatar(c *gin.Context) {
 	Success(c, map[string]interface{}{
 		"avatar_url": avatarURL,
 	})
+}
+
+// convertToUint 将interface{}转换为uint，兼容JSON和MessagePack的不同数字类型
+func convertToUint(v interface{}) uint {
+	switch val := v.(type) {
+	case float64:
+		return uint(val)
+	case int:
+		return uint(val)
+	case int8:
+		return uint(val)
+	case int16:
+		return uint(val)
+	case int32:
+		return uint(val)
+	case int64:
+		return uint(val)
+	case uint:
+		return val
+	case uint8:
+		return uint(val)
+	case uint16:
+		return uint(val)
+	case uint32:
+		return uint(val)
+	case uint64:
+		return uint(val)
+	default:
+		return 0
+	}
 }

@@ -218,12 +218,16 @@
         }
 
         .message {
-            padding: 12px;
+            padding: 12px 20px;
             border-radius: 5px;
             margin-bottom: 20px;
-            display: none;
+            font-weight: 500;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s ease-out;
+            max-height: 0;
+            overflow: hidden;
         }
-
         #fileInput {
             display: none;
         }
@@ -301,12 +305,12 @@
                 return;
             }
 
-            loadProfile();
+            loadProfile(false); // 初始加载不显示提示
             setupFileUpload();
         });
 
         // 加载用户资料
-        async function loadProfile() {
+        async function loadProfile(showMessageOnSuccess = true) {
             const token = localStorage.getItem('token');
             
             try {
@@ -322,8 +326,11 @@
                 if (response.ok && data.code === 0) {
                     currentUser = data.data;
                     displayProfile(currentUser);
+                    if (showMessageOnSuccess) {
+                        showMessage('✓ 资料已重置', 'success');
+                    }
                 } else {
-                    showMessage(data.message || '获取用户信息失败', 'error');
+                    showMessage('✗ ' + (data.message || '获取用户信息失败'), 'error');
                     if (response.status === 401) {
                         setTimeout(() => {
                             window.location.href = 'login.html';
@@ -331,7 +338,7 @@
                     }
                 }
             } catch (error) {
-                showMessage('网络错误', 'error');
+                showMessage('✗ 网络错误，请检查连接', 'error');
                 console.error('Load profile error:', error);
             }
         }
@@ -360,6 +367,7 @@
             const nickname = document.getElementById('nickname').value;
 
             try {
+                showMessage('正在保存...', 'info');
                 const response = await fetch(`${API_BASE_URL}/profile`, {
                     method: 'PUT',
                     headers: {
@@ -372,13 +380,13 @@
                 const data = await response.json();
 
                 if (response.ok && data.code === 0) {
-                    showMessage('资料更新成功', 'success');
-                    loadProfile(); // 重新加载资料
+                    showMessage('✓ 资料更新成功！', 'success');
+                    loadProfile(false); // 静默刷新，不显示提示
                 } else {
-                    showMessage(data.message || '更新失败', 'error');
+                    showMessage('✗ ' + (data.message || '更新失败'), 'error');
                 }
             } catch (error) {
-                showMessage('网络错误', 'error');
+                showMessage('✗ 网络错误，请检查连接', 'error');
                 console.error('Update profile error:', error);
             }
         });
@@ -402,7 +410,7 @@
                 const token = localStorage.getItem('token');
 
                 try {
-                    showMessage('正在上传...', 'success');
+                    showMessage('⬆ 正在上传头像...', 'info');
                     const response = await fetch(`${API_BASE_URL}/upload/avatar`, {
                         method: 'POST',
                         headers: {
@@ -414,13 +422,13 @@
                     const data = await response.json();
 
                     if (response.ok && data.code === 0) {
-                        showMessage('头像上传成功', 'success');
-                        loadProfile(); // 重新加载资料
+                        showMessage('✓ 头像上传成功！', 'success');
+                        loadProfile(false); // 静默刷新，不显示提示
                     } else {
-                        showMessage(data.message || '上传失败', 'error');
+                        showMessage('✗ ' + (data.message || '上传失败'), 'error');
                     }
                 } catch (error) {
-                    showMessage('网络错误', 'error');
+                    showMessage('✗ 网络错误，请检查连接', 'error');
                     console.error('Upload error:', error);
                 }
             });
@@ -449,11 +457,25 @@
         // 显示消息
         function showMessage(text, type) {
             const messageEl = document.getElementById('message');
-            messageEl.textContent = text;
-            messageEl.className = `message ${type}`;
             
+            // 先移除所有状态类
+            messageEl.classList.remove('success', 'error', 'info', 'show');
+            
+            // 强制重绘，确保动画能重新触发
+            void messageEl.offsetWidth;
+            
+            // 设置新内容
+            messageEl.textContent = text;
+            messageEl.classList.add(type);
+            
+            // 延迟一帧后添加 show 类以触发动画
+            requestAnimationFrame(() => {
+                messageEl.classList.add('show');
+            });
+            
+            // 3秒后自动隐藏
             setTimeout(() => {
-                messageEl.style.display = 'none';
+                messageEl.classList.remove('show');
             }, 3000);
         }
     </script>
