@@ -224,18 +224,6 @@
             display: none;
         }
 
-        .message.error {
-            background: #fee;
-            color: #c33;
-            display: block;
-        }
-
-        .message.success {
-            background: #efe;
-            color: #3c3;
-            display: block;
-        }
-
         #fileInput {
             display: none;
         }
@@ -271,12 +259,8 @@
                 <h2 class="section-title">基本信息</h2>
                 <div class="info-grid">
                     <div class="info-item">
-                        <div class="info-label">用户名 (不可更改)</div>
+                        <div class="info-label">用户名</div>
                         <div class="info-value" id="username">-</div>
-                    </div>
-                    <div class="info-item">
-                        <div class="info-label">用户ID</div>
-                        <div class="info-value" id="userId">-</div>
                     </div>
                     <div class="info-item">
                         <div class="info-label">UID</div>
@@ -290,7 +274,7 @@
                 <h2 class="section-title">编辑资料</h2>
                 <form id="profileForm" class="edit-form">
                     <div class="form-group">
-                        <label for="nickname">昵称 (支持Unicode字符)</label>
+                        <label for="nickname">昵称</label>
                         <input type="text" id="nickname" name="nickname" placeholder="请输入昵称">
                     </div>
                     <div class="btn-group">
@@ -355,8 +339,7 @@
         // 显示用户资料
         function displayProfile(user) {
             document.getElementById('username').textContent = user.username;
-            document.getElementById('userId').textContent = user.id;
-            document.getElementById('uid').textContent = user.uid;
+            document.getElementById('uid').textContent = user.uid || '-';
             document.getElementById('nickname').value = user.nickname || '';
 
             // 显示头像
@@ -364,8 +347,7 @@
             if (user.avatar) {
                 avatarDisplay.innerHTML = `<img src="http://localhost:8080${user.avatar}" class="avatar" alt="Avatar">`;
             } else {
-                const firstChar = user.nickname ? user.nickname.charAt(0) : user.username.charAt(0).toUpperCase();
-                avatarDisplay.textContent = firstChar;
+                avatarDisplay.textContent = user.nickname ? user.nickname.charAt(0) : user.username.charAt(0).toUpperCase();
                 avatarDisplay.className = 'avatar-placeholder';
             }
         }

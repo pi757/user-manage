@@ -5,6 +5,7 @@ import (
 	"user-management-system/config"
 )
 
+// 测试密码哈希
 func TestHashPassword(t *testing.T) {
 	password := "test_password_123"
 
@@ -20,8 +21,10 @@ func TestHashPassword(t *testing.T) {
 	if hashed == password {
 		t.Error("Hashed password should be different from original")
 	}
+	t.Logf("original:%s, Hashed password: %s", password, hashed)
 }
 
+// 校验密码
 func TestCheckPassword(t *testing.T) {
 	password := "test_password_123"
 
