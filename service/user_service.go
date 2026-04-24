@@ -104,6 +104,7 @@ func (s *UserService) Register(params map[string]interface{}) (interface{}, erro
 	}
 
 	// 创建用户
+	now := time.Now()
 	user := models.User{
 		UID:          uid,
 		Username:     username,
@@ -111,6 +112,8 @@ func (s *UserService) Register(params map[string]interface{}) (interface{}, erro
 		PasswordHash: passwordHash,
 		Avatar:       "",
 		IsAvailable:  1,
+		CreateTime:   now,
+		UpdateTime:   now,
 	}
 
 	if err := database.DB.Create(&user).Error; err != nil {

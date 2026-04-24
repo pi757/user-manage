@@ -14,8 +14,8 @@ import (
 )
 
 func main() {
-	// 加载配置
-	cfg := config.LoadConfig()
+	// 加载TCP服务配置（仅包含需要的配置）
+	cfg := config.LoadTCPServiceConfig()
 
 	// 初始化数据库
 	if err := database.InitMySQL(&cfg.MySQL); err != nil {
@@ -82,5 +82,8 @@ func main() {
 	<-quit
 
 	fmt.Println("Shutting down server...")
-	rpcServer.Stop()
+	err := rpcServer.Stop()
+	if err != nil {
+		return
+	}
 }

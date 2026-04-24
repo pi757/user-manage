@@ -20,8 +20,8 @@ const (
 )
 
 func main() {
-	// 加载配置
-	cfg := config.LoadConfig()
+	// 加载TCP服务配置（需要数据库）
+	cfg := config.LoadTCPServiceConfig()
 
 	// 初始化数据库
 	if err := database.InitMySQL(&cfg.MySQL); err != nil {

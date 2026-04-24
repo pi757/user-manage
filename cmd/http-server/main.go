@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	// 加载配置
-	cfg := config.LoadConfig()
+	// 加载HTTP服务配置（仅包含需要的配置）
+	cfg := config.LoadHTTPServiceConfig()
 
 	// 创建RPC客户端连接池
 	rpcPool := rpc.NewClientPool(cfg.TCPServer.Port, 100)

@@ -13,6 +13,6 @@ type User struct {
 	PasswordHash string    `gorm:"column:password_hash" json:"-"`
 	Avatar       string    `gorm:"column:avatar" json:"avatar"`
 	IsAvailable  int8      `gorm:"column:is_available" json:"is_available"`
-	CreateTime   time.Time `gorm:"column:create_time" json:"create_time"`
-	UpdateTime   time.Time `gorm:"column:update_time" json:"update_time"`
+	CreateTime   time.Time `gorm:"column:create_time;autoCreateTime" json:"create_time"`
+	UpdateTime   time.Time `gorm:"column:update_time;autoUpdateTime" json:"update_time"`
 }

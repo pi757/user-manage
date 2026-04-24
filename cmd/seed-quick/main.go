@@ -12,7 +12,7 @@ import (
 const testUsers = 200 // 仅创建200个测试用户
 
 func main() {
-	cfg := config.LoadConfig()
+	cfg := config.LoadTCPServiceConfig()
 
 	if err := database.InitMySQL(&cfg.MySQL); err != nil {
 		log.Fatalf("Failed to initialize MySQL: %v", err)
