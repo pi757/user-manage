@@ -35,9 +35,9 @@ func NewUploadHandler(rpcPool *rpc.ClientPool, uploadDir string, maxFileSize int
 
 // UploadAvatar 上传头像
 func (h *UploadHandler) UploadAvatar(c *gin.Context) {
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		Error(c, http.StatusUnauthorized, "token is required")
+	token, err := extractToken(c)
+	if err != nil {
+		Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 

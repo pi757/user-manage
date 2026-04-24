@@ -22,11 +22,6 @@ func main() {
 		log.Fatalf("Failed to initialize MySQL: %v", err)
 	}
 
-	// 自动迁移表结构
-	if err := database.AutoMigrate(); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-
 	// 初始化Redis
 	if err := database.InitRedis(&cfg.Redis); err != nil {
 		log.Fatalf("Failed to initialize Redis: %v", err)

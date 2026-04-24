@@ -3,8 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
+	"time"
 	"user-management-system/config"
 	"user-management-system/handlers"
+	"user-management-system/middleware"
 	"user-management-system/rpc"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +29,10 @@ func main() {
 
 	// 创建Gin引擎
 	router := gin.Default()
+
+	// 速率限制中间件（每个IP每分钟最多60个请求）
+	rateLimiter := middleware.NewRateLimiter(60, time.Minute)
+	router.Use(rateLimiter.Middleware())
 
 	// 跨域中间件
 	router.Use(func(c *gin.Context) {

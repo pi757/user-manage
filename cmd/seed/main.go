@@ -28,11 +28,6 @@ func main() {
 		log.Fatalf("Failed to initialize MySQL: %v", err)
 	}
 
-	// 自动迁移表结构
-	if err := database.AutoMigrate(); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-
 	fmt.Printf("Starting to insert %d users...\n", totalUsers)
 	startTime := time.Now()
 

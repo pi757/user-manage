@@ -1,12 +1,35 @@
 package handlers
 
 import (
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"net/http"
+	"strings"
 	"user-management-system/rpc"
+
+	"github.com/gin-gonic/gin"
 )
 
-// Handler HTTP处理器
+// extractToken 从 Authorization header 中提取 Token
+func extractToken(c *gin.Context) (string, error) {
+	authHeader := c.GetHeader("Authorization")
+	if authHeader == "" {
+		return "", fmt.Errorf("authorization header is required")
+	}
+
+	// 支持 Bearer Token 格式
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		if token == "" {
+			return "", fmt.Errorf("invalid token format")
+		}
+		return token, nil
+	}
+
+	// 兼容直接传递 Token 的格式（向后兼容）
+	return authHeader, nil
+}
+
+// Response 统一响应格式
 type Handler struct {
 	rpcPool *rpc.ClientPool
 }
@@ -18,7 +41,6 @@ func NewHandler(rpcPool *rpc.ClientPool) *Handler {
 	}
 }
 
-// Response 统一响应格式
 type Response struct {
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
@@ -108,9 +130,9 @@ func (h *Handler) Register(c *gin.Context) {
 
 // GetProfile 获取用户信息
 func (h *Handler) GetProfile(c *gin.Context) {
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		Error(c, http.StatusUnauthorized, "token is required")
+	token, err := extractToken(c)
+	if err != nil {
+		Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -134,9 +156,9 @@ func (h *Handler) GetProfile(c *gin.Context) {
 
 // UpdateProfile 更新用户信息
 func (h *Handler) UpdateProfile(c *gin.Context) {
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		Error(c, http.StatusUnauthorized, "token is required")
+	token, err := extractToken(c)
+	if err != nil {
+		Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 
@@ -172,9 +194,9 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 
 // Logout 登出接口
 func (h *Handler) Logout(c *gin.Context) {
-	token := c.GetHeader("Authorization")
-	if token == "" {
-		Error(c, http.StatusUnauthorized, "token is required")
+	token, err := extractToken(c)
+	if err != nil {
+		Error(c, http.StatusUnauthorized, err.Error())
 		return
 	}
 

@@ -228,6 +228,31 @@
             max-height: 0;
             overflow: hidden;
         }
+
+        .message.show {
+            opacity: 1;
+            transform: translateY(0);
+            max-height: 100px;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
         #fileInput {
             display: none;
         }
@@ -317,7 +342,7 @@
                 const response = await fetch(`${API_BASE_URL}/profile`, {
                     method: 'GET',
                     headers: {
-                        'Authorization': token
+                        'Authorization': `Bearer ${token}`
                     }
                 });
 
@@ -372,7 +397,7 @@
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': token
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ nickname })
                 });
@@ -414,7 +439,7 @@
                     const response = await fetch(`${API_BASE_URL}/upload/avatar`, {
                         method: 'POST',
                         headers: {
-                            'Authorization': token
+                            'Authorization': `Bearer ${token}`
                         },
                         body: formData
                     });
@@ -442,7 +467,7 @@
                 await fetch(`${API_BASE_URL}/logout`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': token
+                        'Authorization': `Bearer ${token}`
                     }
                 });
             } catch (error) {

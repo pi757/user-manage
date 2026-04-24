@@ -18,10 +18,6 @@ func main() {
 		log.Fatalf("Failed to initialize MySQL: %v", err)
 	}
 
-	if err := database.AutoMigrate(); err != nil {
-		log.Fatalf("Failed to migrate database: %v", err)
-	}
-
 	fmt.Printf("Creating %d test users...\n", testUsers)
 
 	users := make([]models.User, 0, testUsers)

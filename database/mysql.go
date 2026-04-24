@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"user-management-system/config"
-	"user-management-system/models"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -36,9 +35,4 @@ func InitMySQL(cfg *config.MySQLConfig) error {
 
 	log.Println("MySQL connected successfully")
 	return nil
-}
-
-// AutoMigrate 自动迁移数据库表
-func AutoMigrate() error {
-	return DB.AutoMigrate(&models.User{})
 }
