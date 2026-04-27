@@ -209,7 +209,7 @@ GC减少: 40-50%
 
 ```go
 server := rpc.NewServer()  // MessagePack
-pool := rpc.NewClientPool(addr, 100)  // MessagePack
+pool := rpc.NewClientPool(100)  // MessagePack，RPC框架内部管理服务器地址
 ```
 
 **优势**:
@@ -222,7 +222,7 @@ pool := rpc.NewClientPool(addr, 100)  // MessagePack
 
 ```go
 server := rpc.NewServer(rpc.WithCodecType(rpc.JSONCodec))
-pool := rpc.NewClientPool(addr, 100, rpc.WithPoolCodecType(rpc.JSONCodec))
+pool := rpc.NewClientPool(100, rpc.WithPoolCodecType(rpc.JSONCodec))
 ```
 
 **优势**:
@@ -236,7 +236,7 @@ pool := rpc.NewClientPool(addr, 100, rpc.WithPoolCodecType(rpc.JSONCodec))
 // 仅在迁移期间临时使用
 server := rpc.NewServer(rpc.WithCodecType(rpc.JSONCodec))
 // 新客户端使用MessagePack
-pool := rpc.NewClientPool(addr, 100)  // MessagePack
+pool := rpc.NewClientPool(100)  // MessagePack
 ```
 
 **注意**: 这会导致通信失败！必须保持一致。

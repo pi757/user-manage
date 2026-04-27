@@ -331,10 +331,10 @@ QPS峰值: 2100
 #### 优化1: 连接池调优
 ```go
 // 优化前
-rpcPool := rpc.NewClientPool(addr, 100)
+rpcPool := rpc.NewClientPool(100)
 
-// 优化后
-rpcPool := rpc.NewClientPool(addr, 300)
+// 优化后（RPC框架内部管理服务器地址）
+rpcPool := rpc.NewClientPool(300)
 ```
 
 **效果**: QPS提升15%

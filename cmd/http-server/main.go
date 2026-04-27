@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 	"user-management-system/config"
+	"user-management-system/database"
+	"user-management-system/discovery"
 	"user-management-system/handlers"
 	"user-management-system/middleware"
 	"user-management-system/rpc"
@@ -12,12 +15,35 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
+
 func main() {
 	// 加载HTTP服务配置（仅包含需要的配置）
 	cfg := config.LoadHTTPServiceConfig()
 
-	// 创建RPC客户端连接池
-	rpcPool := rpc.NewClientPool(cfg.TCPServer.Port, 100)
+	// 初始化Redis（用于服务发现）
+	redisCfg := &config.RedisConfig{
+		Host:     getEnv("REDIS_HOST", "localhost"),
+		Port:     getEnv("REDIS_PORT", "6380"),
+		Password: getEnv("REDIS_PASSWORD", ""),
+		DB:       0,
+		PoolSize: 10,
+	}
+	if err := database.InitRedis(redisCfg); err != nil {
+		log.Fatalf("Failed to initialize Redis: %v", err)
+	}
+
+	// 创建服务发现
+	serviceDisc := discovery.NewRedisServiceDiscovery(database.RedisClient, "")
+	defer serviceDisc.Close()
+
+	// 创建RPC客户端连接池（使用服务发现）
+	rpcPool := rpc.NewClientPool(100, rpc.WithServiceDiscovery(serviceDisc, "rpc-tcp-server"))
 	defer rpcPool.Close()
 
 	// 创建处理器

@@ -39,14 +39,13 @@ rpcServer := rpc.NewServer(
 #### 使用MessagePack（推荐，默认）
 ```go
 // cmd/http-server/main.go
-rpcPool := rpc.NewClientPool(cfg.TCPServer.Port, 100) // 默认使用MessagePack
+rpcPool := rpc.NewClientPool(100) // RPC框架内部管理服务器地址，默认使用MessagePack
 ```
 
 #### 使用JSON
 ```go
 // cmd/http-server/main.go
 rpcPool := rpc.NewClientPool(
-    cfg.TCPServer.Port, 
     100,
     rpc.WithPoolCodecType(rpc.JSONCodec),
 )
@@ -76,15 +75,15 @@ client, err := rpc.NewClient(
 ```go
 // ✅ 正确：都使用MessagePack
 server := rpc.NewServer() // 默认MsgPackCodec
-pool := rpc.NewClientPool(addr, 100) // 默认MsgPackCodec
+pool := rpc.NewClientPool(100) // 默认MsgPackCodec
 
 // ✅ 正确：都使用JSON
 server := rpc.NewServer(rpc.WithCodecType(rpc.JSONCodec))
-pool := rpc.NewClientPool(addr, 100, rpc.WithPoolCodecType(rpc.JSONCodec))
+pool := rpc.NewClientPool(100, rpc.WithPoolCodecType(rpc.JSONCodec))
 
 // ❌ 错误：编解码器不匹配会导致通信失败
 server := rpc.NewServer() // MsgPackCodec
-pool := rpc.NewClientPool(addr, 100, rpc.WithPoolCodecType(rpc.JSONCodec))
+pool := rpc.NewClientPool(100, rpc.WithPoolCodecType(rpc.JSONCodec))
 ```
 
 ### 迁移建议

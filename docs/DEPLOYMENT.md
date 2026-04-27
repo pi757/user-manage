@@ -458,8 +458,8 @@ MaxOpenConns: 200
 MaxIdleConns: 50
 
 # 3. 调整RPC连接池
-# 在cmd/http-server/main.go中修改
-rpcPool := rpc.NewClientPool(cfg.TCPServer.Port, 200)
+# 在cmd/http-server/main.go中修改（RPC框架内部管理服务器地址）
+rpcPool := rpc.NewClientPool(200)
 ```
 
 ## 8. 升级与维护

@@ -4,16 +4,6 @@ import (
 	"os"
 )
 
-// Config 应用配置
-type Config struct {
-	HTTPServer HTTPServerConfig
-	TCPServer  TCPServerConfig
-	MySQL      MySQLConfig
-	Redis      RedisConfig
-	Session    SessionConfig
-	FileUpload FileUploadConfig
-}
-
 // HTTPServerConfig HTTP服务器配置
 type HTTPServerConfig struct {
 	Port string

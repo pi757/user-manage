@@ -12,8 +12,8 @@
 // TCP Server - 自动使用MessagePack
 server := rpc.NewServer()
 
-// HTTP Server - 自动使用MessagePack  
-pool := rpc.NewClientPool("localhost:9090", 100)
+// HTTP Server - 自动使用MessagePack（RPC框架内部管理服务器地址）
+pool := rpc.NewClientPool(100)
 ```
 
 ### 使用JSON
@@ -22,9 +22,8 @@ pool := rpc.NewClientPool("localhost:9090", 100)
 // TCP Server - 显式指定JSON
 server := rpc.NewServer(rpc.WithCodecType(rpc.JSONCodec))
 
-// HTTP Server - 显式指定JSON
-pool := rpc.NewClientPool("localhost:9090", 100, 
-    rpc.WithPoolCodecType(rpc.JSONCodec))
+// HTTP Server - 显式指定JSON（RPC框架内部管理服务器地址）
+pool := rpc.NewClientPool(100, rpc.WithPoolCodecType(rpc.JSONCodec))
 ```
 
 ## 选择指南
@@ -44,7 +43,7 @@ pool := rpc.NewClientPool("localhost:9090", 100,
 ```go
 // 服务器和客户端使用相同编解码器
 server := rpc.NewServer()  // MsgPack
-pool := rpc.NewClientPool(addr, 100)  // MsgPack ✓
+pool := rpc.NewClientPool(100)  // MsgPack ✓
 ```
 
 ### ❌ 错误做法
@@ -52,8 +51,7 @@ pool := rpc.NewClientPool(addr, 100)  // MsgPack ✓
 ```go
 // 编解码器不匹配 - 会导致通信失败！
 server := rpc.NewServer()  // MsgPack
-pool := rpc.NewClientPool(addr, 100, 
-    rpc.WithPoolCodecType(rpc.JSONCodec))  // JSON ✗
+pool := rpc.NewClientPool(100, rpc.WithPoolCodecType(rpc.JSONCodec))  // JSON ✗
 ```
 
 ## 性能数据
