@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"time"
 	"user-management-system/config"
 	"user-management-system/database"
@@ -15,26 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func getEnv(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-	return defaultValue
-}
-
 func main() {
 	// 加载HTTP服务配置（仅包含需要的配置）
 	cfg := config.LoadHTTPServiceConfig()
 
-	// 初始化Redis（用于服务发现）
-	redisCfg := &config.RedisConfig{
-		Host:     getEnv("REDIS_HOST", "localhost"),
-		Port:     getEnv("REDIS_PORT", "6380"),
-		Password: getEnv("REDIS_PASSWORD", ""),
-		DB:       0,
-		PoolSize: 10,
-	}
-	if err := database.InitRedis(redisCfg); err != nil {
+	// 初始化Redis
+	if err := database.InitRedis(&cfg.Redis); err != nil {
 		log.Fatalf("Failed to initialize Redis: %v", err)
 	}
 

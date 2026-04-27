@@ -36,7 +36,7 @@ type ServiceDiscovery interface {
 	Close() error
 }
 
-// RedisServiceDiscovery 基于Redis的服务发现实现
+// RedisServiceDiscovery 基于Redis Sorted Set的服务发现实现
 type RedisServiceDiscovery struct {
 	client *redis.Client
 	prefix string // Redis key前缀
@@ -53,29 +53,36 @@ func NewRedisServiceDiscovery(redisClient *redis.Client, prefix string) *RedisSe
 	}
 }
 
-// Register 注册服务
+// Register 注册服务（使用Sorted Set）
 func (d *RedisServiceDiscovery) Register(ctx context.Context, info *ServiceInfo, ttl time.Duration) error {
 	info.Health = "healthy"
 	info.RegisterAt = time.Now()
 	info.LastHeartAt = time.Now()
 
-	key := fmt.Sprintf("%s:%s:%s:%d", d.prefix, info.ServiceName, info.Address, info.Port)
+	member := fmt.Sprintf("%s:%d", info.Address, info.Port)
+	key := fmt.Sprintf("%s:%s:%s", d.prefix, info.ServiceName, member)
 
 	data, err := json.Marshal(info)
 	if err != nil {
 		return fmt.Errorf("failed to marshal service info: %w", err)
 	}
+	// 使用Pipeline保证原子性
+	pipe := d.client.Pipeline()
 
-	// 设置服务信息和TTL
-	if err := d.client.Set(ctx, key, data, ttl).Err(); err != nil {
+	// 1. 设置服务详情和TTL
+	pipe.Set(ctx, key, data, ttl)
+
+	// 2. 添加到Sorted Set，score为当前时间戳（用于清理过期服务）
+	zsetKey := fmt.Sprintf("%s:%s:zset", d.prefix, info.ServiceName)
+	score := float64(time.Now().Unix())
+	pipe.ZAdd(ctx, zsetKey, redis.Z{
+		Score:  score,
+		Member: member,
+	})
+
+	_, err = pipe.Exec(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to register service: %w", err)
-	}
-
-	// 将服务地址添加到服务列表
-	listKey := fmt.Sprintf("%s:%s:list", d.prefix, info.ServiceName)
-	member := fmt.Sprintf("%s:%d", info.Address, info.Port)
-	if err := d.client.SAdd(ctx, listKey, member).Err(); err != nil {
-		return fmt.Errorf("failed to add service to list: %w", err)
 	}
 
 	return nil
@@ -83,16 +90,20 @@ func (d *RedisServiceDiscovery) Register(ctx context.Context, info *ServiceInfo,
 
 // Deregister 注销服务
 func (d *RedisServiceDiscovery) Deregister(ctx context.Context, serviceName, address string) error {
-	// 从列表中移除
-	listKey := fmt.Sprintf("%s:%s:list", d.prefix, serviceName)
-	if err := d.client.SRem(ctx, listKey, address).Err(); err != nil {
-		return fmt.Errorf("failed to remove service from list: %w", err)
-	}
+	// 使用Pipeline保证原子性
+	pipe := d.client.Pipeline()
 
-	// 删除服务详细信息
+	// 1. 从Sorted Set中移除
+	zsetKey := fmt.Sprintf("%s:%s:zset", d.prefix, serviceName)
+	pipe.ZRem(ctx, zsetKey, address)
+
+	// 2. 删除服务详细信息
 	key := fmt.Sprintf("%s:%s:%s", d.prefix, serviceName, address)
-	if err := d.client.Del(ctx, key).Err(); err != nil {
-		return fmt.Errorf("failed to delete service info: %w", err)
+	pipe.Del(ctx, key)
+
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to deregister service: %w", err)
 	}
 
 	return nil
@@ -112,7 +123,10 @@ func (d *RedisServiceDiscovery) Heartbeat(ctx context.Context, serviceName, addr
 		return fmt.Errorf("service not found: %s:%s", serviceName, address)
 	}
 
-	// 更新最后心跳时间和TTL
+	// 使用Pipeline更新
+	pipe := d.client.Pipeline()
+
+	// 1. 更新服务详情和TTL
 	var info ServiceInfo
 	data, err := d.client.Get(ctx, key).Bytes()
 	if err != nil {
@@ -131,8 +145,39 @@ func (d *RedisServiceDiscovery) Heartbeat(ctx context.Context, serviceName, addr
 		return fmt.Errorf("failed to marshal updated service info: %w", err)
 	}
 
-	if err := d.client.Set(ctx, key, updatedData, ttl).Err(); err != nil {
+	pipe.Set(ctx, key, updatedData, ttl)
+
+	// 2. 更新Sorted Set的score为当前时间戳
+	zsetKey := fmt.Sprintf("%s:%s:zset", d.prefix, serviceName)
+	score := float64(time.Now().Unix())
+	pipe.ZAdd(ctx, zsetKey, redis.Z{
+		Score:  score,
+		Member: address,
+	})
+
+	_, err = pipe.Exec(ctx)
+	if err != nil {
 		return fmt.Errorf("failed to update heartbeat: %w", err)
+	}
+
+	return nil
+}
+
+// cleanupExpiredServices 清理过期的服务（score超过ttl的）
+func (d *RedisServiceDiscovery) cleanupExpiredServices(ctx context.Context, serviceName string, ttl time.Duration) error {
+	zsetKey := fmt.Sprintf("%s:%s:zset", d.prefix, serviceName)
+
+	// 计算过期时间戳
+	expiredAt := time.Now().Add(-ttl).Unix()
+
+	// 移除所有score小于过期时间戳的成员
+	removed, err := d.client.ZRemRangeByScore(ctx, zsetKey, "0", fmt.Sprintf("%d", expiredAt)).Result()
+	if err != nil {
+		return fmt.Errorf("failed to cleanup expired services: %w", err)
+	}
+
+	if removed > 0 {
+		fmt.Printf("Cleaned up %d expired services for %s\n", removed, serviceName)
 	}
 
 	return nil
@@ -140,10 +185,15 @@ func (d *RedisServiceDiscovery) Heartbeat(ctx context.Context, serviceName, addr
 
 // Discover 发现服务（返回所有健康的服务实例）
 func (d *RedisServiceDiscovery) Discover(ctx context.Context, serviceName string) ([]*ServiceInfo, error) {
-	listKey := fmt.Sprintf("%s:%s:list", d.prefix, serviceName)
+	zsetKey := fmt.Sprintf("%s:%s:zset", d.prefix, serviceName)
 
-	// 获取所有服务地址
-	members, err := d.client.SMembers(ctx, listKey).Result()
+	// 先清理过期服务（TTL设为30秒，给一点缓冲）
+	if err := d.cleanupExpiredServices(ctx, serviceName, 30*time.Second); err != nil {
+		fmt.Printf("Warning: cleanup failed: %v\n", err)
+	}
+
+	// 获取所有成员
+	members, err := d.client.ZRange(ctx, zsetKey, 0, -1).Result()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get service list: %w", err)
 	}
